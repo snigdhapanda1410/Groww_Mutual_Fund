@@ -30,10 +30,14 @@ COPY src/ /app/src/
 COPY data/ /app/data/
 COPY scripts/ /app/scripts/
 
-# Ensure persistent data directories exist and entrypoint is executable with LF line endings
+# Ensure persistent directories exist, sanitize line endings, and replace uvicorn with wrapper
 RUN mkdir -p /app/data/chromadb /app/data/sessions /app/data/raw /app/data/processed && \
     sed -i 's/\r$//' /app/scripts/entrypoint.sh && \
-    chmod +x /app/scripts/entrypoint.sh
+    sed -i 's/\r$//' /app/scripts/entrypoint.py && \
+    sed -i 's/\r$//' /app/scripts/uvicorn_wrapper.py && \
+    chmod +x /app/scripts/entrypoint.sh /app/scripts/entrypoint.py /app/scripts/uvicorn_wrapper.py && \
+    cp /app/scripts/uvicorn_wrapper.py /usr/local/bin/uvicorn && \
+    chmod +x /usr/local/bin/uvicorn
 
 # Non-root user for security
 RUN useradd -m -u 1000 appuser && \

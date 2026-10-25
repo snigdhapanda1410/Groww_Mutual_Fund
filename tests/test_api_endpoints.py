@@ -158,12 +158,43 @@ class TestDeploymentConfigurations:
         assert "src.api.main" in content
 
     def test_entrypoint_script_exists(self):
-        """scripts/entrypoint.sh must exist and handle $PORT sanitization."""
-        entrypoint_file = Path("scripts/entrypoint.sh")
-        assert entrypoint_file.exists(), "Missing scripts/entrypoint.sh"
-        content = entrypoint_file.read_text(encoding="utf-8")
-        assert "$PORT" in content
-        assert "src.api.main" in content
+        """scripts/entrypoint.sh and scripts/entrypoint.py must exist."""
+        entrypoint_sh = Path("scripts/entrypoint.sh")
+        entrypoint_py = Path("scripts/entrypoint.py")
+        wrapper_py = Path("scripts/uvicorn_wrapper.py")
+
+        assert entrypoint_sh.exists(), "Missing scripts/entrypoint.sh"
+        assert entrypoint_py.exists(), "Missing scripts/entrypoint.py"
+        assert wrapper_py.exists(), "Missing scripts/uvicorn_wrapper.py"
+
+    def test_entrypoint_argument_sanitization(self):
+        """scripts/entrypoint.py sanitize_args must replace literal $PORT and ${PORT}."""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("entrypoint_mod", "scripts/entrypoint.py")
+        entrypoint_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(entrypoint_mod)
+
+        # Test array format: ['uvicorn', 'src.api.main:app', '--port', '$PORT']
+        res1 = entrypoint_mod.sanitize_args(["uvicorn", "src.api.main:app", "--port", "$PORT"], "9000")
+        assert res1 == ["uvicorn", "src.api.main:app", "--port", "9000"]
+
+        # Test single string format: ['uvicorn src.api.main:app --port $PORT --workers 2']
+        res2 = entrypoint_mod.sanitize_args(["uvicorn src.api.main:app --port $PORT --workers 2"], "9000")
+        assert res2 == ["uvicorn", "src.api.main:app", "--port", "9000", "--workers", "2"]
+
+        # Test --port=${PORT} format
+        res3 = entrypoint_mod.sanitize_args(["uvicorn", "src.api.main:app", "--port=${PORT}"], "7500")
+        assert res3 == ["uvicorn", "src.api.main:app", "--port=7500"]
+
+    def test_railway_and_nixpacks_toml(self):
+        """railway.toml and nixpacks.toml must specify python -m src.api.main."""
+        railway_toml = Path("railway.toml")
+        nixpacks_toml = Path("nixpacks.toml")
+        assert railway_toml.exists(), "Missing railway.toml"
+        assert nixpacks_toml.exists(), "Missing nixpacks.toml"
+
+        assert "python -m src.api.main" in railway_toml.read_text(encoding="utf-8")
+        assert "python -m src.api.main" in nixpacks_toml.read_text(encoding="utf-8")
 
     def test_vercel_json_configuration(self):
         """vercel.json must configure reverse proxy rewrites to Railway and security headers."""
