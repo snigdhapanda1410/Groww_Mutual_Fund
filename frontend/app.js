@@ -2,8 +2,10 @@
  * Groww HDFC Mutual Fund Facts Assistant — Frontend Client
  * Communicates with Railway FastAPI backend via /api/* endpoints
  */
-
-const API_BASE = ""; // Relative path allows Vercel reverse proxy (/api/*) to route to Railway
+// Relative path on Vercel reverse proxy (/api/*); fallback to localhost:8000 for local dev
+const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && window.location.port !== "8000"
+    ? "http://localhost:8000"
+    : "";
 
 let activeThreadId = null;
 let isSubmitting = false;
