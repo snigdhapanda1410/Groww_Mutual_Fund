@@ -1,0 +1,31 @@
+# Environment and secrets
+.env
+*.env.local
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Data artifacts and local storage
+data/chromadb/
+data/chromadb_test/
+data/sessions/
+data/processed/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

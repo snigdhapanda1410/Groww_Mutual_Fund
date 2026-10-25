@@ -1,0 +1,26 @@
+# Git and IDE
+.git/
+.github/
+.vscode/
+.idea/
+
+# Python Virtual Environments and Caches
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation and Temporary Files
+Docs/
+stitch/
+tests/
+ui/
+*.md
+.tempmediaStorage/
+.user_uploaded/

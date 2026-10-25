@@ -1,0 +1,62 @@
+{
+  "manifest_version": "1.0",
+  "last_updated": "2026-10-25",
+  "total_sources": 5,
+  "sources": [
+    {
+      "url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "scheme_id": "hdfc_mid_cap",
+      "scheme_name": "HDFC Mid-Cap Opportunities Fund (Direct - Growth)",
+      "category": "Equity: Mid Cap",
+      "format": "html",
+      "download_path": "data/raw/hdfc_mid_cap/groww_page.html",
+      "sha256": "e5e1dbe91c99489c9df70b3e9c49df2f786728a76fa9172305176f487b68ae82",
+      "description": "Groww scheme page \u2014 NAV, expense ratio, exit load, minimum SIP/lumpsum, fund size, lock-in, holdings, benchmark",
+      "downloaded_at": "2026-10-25T08:47:57.344982Z"
+    },
+    {
+      "url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "scheme_id": "hdfc_small_cap",
+      "scheme_name": "HDFC Small Cap Fund (Direct - Growth)",
+      "category": "Equity: Small Cap",
+      "format": "html",
+      "download_path": "data/raw/hdfc_small_cap/groww_page.html",
+      "sha256": "0985a7bac85474742688f8b59d519e95b6a0ae4a4c7697a4dbe529703c6027ba",
+      "description": "Groww scheme page \u2014 NAV, expense ratio, exit load, minimum SIP/lumpsum, fund size, lock-in, holdings, benchmark",
+      "downloaded_at": "2026-10-25T08:47:58.166356Z"
+    },
+    {
+      "url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "scheme_id": "hdfc_large_mid_cap",
+      "scheme_name": "HDFC Large and Mid Cap Fund (Direct - Growth)",
+      "category": "Equity: Large & Mid Cap",
+      "format": "html",
+      "download_path": "data/raw/hdfc_large_mid_cap/groww_page.html",
+      "sha256": "f3be47e6f6522a96cd67afea48e1b71f44bda3bf206227d66fccf1be78383c36",
+      "description": "Groww scheme page \u2014 NAV, expense ratio, exit load, minimum SIP/lumpsum, fund size, lock-in, holdings, benchmark",
+      "downloaded_at": "2026-10-25T08:47:58.842906Z"
+    },
+    {
+      "url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "scheme_id": "hdfc_silver_etf_fof",
+      "scheme_name": "HDFC Silver ETF Fund of Fund (Direct - Growth)",
+      "category": "Commodity: Silver FoF",
+      "format": "html",
+      "download_path": "data/raw/hdfc_silver_etf_fof/groww_page.html",
+      "sha256": "3165b569fbeb353661b492fe99414ab42a03a8254fdf044813d3ee3c2ad6c451",
+      "description": "Groww scheme page \u2014 NAV, expense ratio, exit load, minimum SIP/lumpsum, fund size, lock-in, holdings, benchmark",
+      "downloaded_at": "2026-10-25T08:47:59.775902Z"
+    },
+    {
+      "url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "scheme_id": "hdfc_multi_cap",
+      "scheme_name": "HDFC Multi Cap Fund (Direct - Growth)",
+      "category": "Equity: Multi Cap",
+      "format": "html",
+      "download_path": "data/raw/hdfc_multi_cap/groww_page.html",
+      "sha256": "e60f0df3e28dcb81c895c62ad4a60320aafbdcd7d6e1de394d4e97019dffd45a",
+      "description": "Groww scheme page \u2014 NAV, expense ratio, exit load, minimum SIP/lumpsum, fund size, lock-in, holdings, benchmark",
+      "downloaded_at": "2026-10-25T08:48:00.600352Z"
+    }
+  ]
+}

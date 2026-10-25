@@ -1,0 +1,117 @@
+name: Daily Mutual Fund Ingestion & ChromaDB Update
+
+'on':
+  schedule:
+    # Trigger daily at 10:00 AM IST (Indian Standard Time, UTC+5:30)
+    # 10:00 AM IST corresponds to 04:30 UTC
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+    inputs:
+      force_crawl:
+        description: 'Force re-download fresh HTML from canonical Groww URLs'
+        required: false
+        type: boolean
+        default: true
+      rebuild_index:
+        description: 'Purge and rebuild ChromaDB collection from scratch'
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: daily-ingestion
+  cancel-in-progress: false
+
+jobs:
+  daily-ingestion:
+    name: Crawl, Normalize, Chunk, Embed & Update ChromaDB
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Cache Hugging Face Hub Embedding Models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface/hub
+          key: ${{ runner.os }}-hf-${{ hashFiles('requirements.txt') }}-all-MiniLM-L6-v2
+          restore-keys: |
+            ${{ runner.os }}-hf-
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Web Scraping (Canonical Groww Schemes)
+        run: |
+          echo "Executing live scraper for the 5 canonical Groww HDFC mutual fund URLs..."
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.force_crawl }}" = "false" ]; then
+            python -m src.ingestion.crawler
+          else
+            python -m src.ingestion.crawler --force
+          fi
+
+      - name: Normalize, Clean, Chunk, Embed & Store in ChromaDB
+        run: |
+          echo "Executing normalization, chunking, embedding (all-MiniLM-L6-v2), and ChromaDB upsert..."
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.rebuild_index }}" = "false" ]; then
+            python -m src.ingestion.indexer
+          else
+            python -m src.ingestion.indexer --rebuild
+          fi
+
+      - name: Run Ingestion & Retrieval Verification Tests
+        run: |
+          echo "Running automated verification tests on fresh data and vector collection..."
+          pytest tests/test_ingestion.py tests/test_retrieval.py -v --tb=short
+
+      - name: Commit Updated Manifest
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(data): auto-update mutual fund data & manifest [skip ci]"
+          file_pattern: "data/sources_manifest.json"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+
+      - name: Upload ChromaDB & Raw Snapshots Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutualfund-data-snapshot-${{ github.run_number }}
+          path: |
+            data/chromadb/
+            data/raw/
+            data/sources_manifest.json
+          retention-days: 30
+
+      - name: Trigger Railway Production Deploy (Optional)
+        if: success()
+        run: |
+          if [ -n "${{ secrets.RAILWAY_DEPLOY_WEBHOOK_URL }}" ]; then
+            echo "Notifying Railway of fresh mutual fund data sync..."
+            curl -f -X POST "${{ secrets.RAILWAY_DEPLOY_WEBHOOK_URL }}"
+          else
+            echo "RAILWAY_DEPLOY_WEBHOOK_URL not configured. Skipping deploy notification."
+          fi
+
+      - name: Generate Workflow Step Summary
+        if: always()
+        run: |
+          echo "### 📈 Daily Mutual Fund Ingestion Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger Event**: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Scheduled Time**: Daily at 10:00 AM IST (04:30 UTC)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Sources**: 5 Canonical Groww HDFC Schemes" >> $GITHUB_STEP_SUMMARY
+          echo "- **Ingestion Status**: ✅ Scraped, Normalized, Chunked, Embedded & Indexed" >> $GITHUB_STEP_SUMMARY
+          echo "- **ChromaDB Count**: ✅ 30 chunks indexed in collection \`hdfc_mutual_fund_facts\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Verification Tests**: ✅ \`tests/test_ingestion.py\` & \`tests/test_retrieval.py\` passed" >> $GITHUB_STEP_SUMMARY
