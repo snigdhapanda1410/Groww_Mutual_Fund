@@ -25,12 +25,15 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Pre-download SentenceTransformer model into container cache to prevent runtime cold start delays
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
 
-# Copy application source code and corpus data
+# Copy application source code, corpus data, and operational scripts
 COPY src/ /app/src/
 COPY data/ /app/data/
+COPY scripts/ /app/scripts/
 
-# Ensure persistent data directories exist
-RUN mkdir -p /app/data/chromadb /app/data/sessions /app/data/raw /app/data/processed
+# Ensure persistent data directories exist and entrypoint is executable with LF line endings
+RUN mkdir -p /app/data/chromadb /app/data/sessions /app/data/raw /app/data/processed && \
+    sed -i 's/\r$//' /app/scripts/entrypoint.sh && \
+    chmod +x /app/scripts/entrypoint.sh
 
 # Non-root user for security
 RUN useradd -m -u 1000 appuser && \
@@ -39,10 +42,11 @@ USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 # Expose dynamic Railway PORT
-EXPOSE ${PORT}
+EXPOSE 8000
 
-# Run FastAPI via Uvicorn
-CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT} --workers 2"]
+# Entrypoint sanitizes arguments (e.g. literal $PORT) and launches the backend
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]
+CMD ["python", "-m", "src.api.main"]

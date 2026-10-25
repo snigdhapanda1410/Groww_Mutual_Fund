@@ -308,13 +308,14 @@ USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 # Expose dynamic Railway PORT
-EXPOSE ${PORT}
+EXPOSE 8000
 
-# Run FastAPI via Uvicorn
-CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT} --workers 2"]
+# Entrypoint sanitizes arguments (e.g. literal $PORT) and launches the backend
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]
+CMD ["python", "-m", "src.api.main"]
 ```
 
 #### `railway.json`

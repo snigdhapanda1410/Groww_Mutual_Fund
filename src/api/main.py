@@ -312,5 +312,11 @@ def delete_session(session_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run("src.api.main:app", host="0.0.0.0", port=port, reload=True)
+    raw_port = os.getenv("PORT", "8000")
+    try:
+        port = int(raw_port)
+    except (ValueError, TypeError):
+        logger.warning(f"Invalid or non-integer PORT '{raw_port}', falling back to 8000")
+        port = 8000
+    reload_flag = os.getenv("API_RELOAD", "false").lower() in ("true", "1", "yes")
+    uvicorn.run("src.api.main:app", host="0.0.0.0", port=port, reload=reload_flag)

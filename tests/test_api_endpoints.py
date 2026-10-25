@@ -129,7 +129,7 @@ class TestDeploymentConfigurations:
     """Verify production deployment configuration files."""
 
     def test_dockerfile_configuration(self):
-        """Dockerfile must specify python:3.11-slim, model caching, non-root user, and Uvicorn CMD."""
+        """Dockerfile must specify python:3.11-slim, model caching, non-root user, entrypoint, and start command."""
         dockerfile = Path("Dockerfile")
         assert dockerfile.exists(), "Missing Dockerfile"
         content = dockerfile.read_text(encoding="utf-8")
@@ -138,7 +138,8 @@ class TestDeploymentConfigurations:
         assert "sentence-transformers/all-MiniLM-L6-v2" in content
         assert "useradd" in content
         assert "USER appuser" in content
-        assert "uvicorn src.api.main:app" in content
+        assert "entrypoint.sh" in content
+        assert "src.api.main" in content
 
     def test_railway_json_configuration(self):
         """railway.json must configure Dockerfile builder and health check."""
@@ -150,11 +151,19 @@ class TestDeploymentConfigurations:
         assert data["deploy"]["healthcheckPath"] == "/health"
 
     def test_procfile_configuration(self):
-        """Procfile must contain web process command."""
+        """Procfile must contain web process command using python -m src.api.main."""
         procfile = Path("Procfile")
         assert procfile.exists(), "Missing Procfile"
         content = procfile.read_text(encoding="utf-8")
-        assert "uvicorn src.api.main:app" in content
+        assert "src.api.main" in content
+
+    def test_entrypoint_script_exists(self):
+        """scripts/entrypoint.sh must exist and handle $PORT sanitization."""
+        entrypoint_file = Path("scripts/entrypoint.sh")
+        assert entrypoint_file.exists(), "Missing scripts/entrypoint.sh"
+        content = entrypoint_file.read_text(encoding="utf-8")
+        assert "$PORT" in content
+        assert "src.api.main" in content
 
     def test_vercel_json_configuration(self):
         """vercel.json must configure reverse proxy rewrites to Railway and security headers."""
