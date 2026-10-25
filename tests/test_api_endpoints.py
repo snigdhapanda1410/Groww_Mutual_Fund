@@ -14,6 +14,15 @@ client = TestClient(app)
 class TestAPIEndpoints:
     """Validate FastAPI REST endpoints."""
 
+    def test_root_endpoint(self):
+        """GET / must return 200 with service metadata and documentation links."""
+        response = client.get("/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "online"
+        assert data["documentation"] == "/docs"
+        assert data["health_check"] == "/health"
+
     def test_health_check_endpoint(self):
         """GET /health must return 200 with ChromaDB collection metrics and model info."""
         response = client.get("/health")

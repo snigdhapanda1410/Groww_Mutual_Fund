@@ -84,6 +84,15 @@ async def lifespan(app: FastAPI):
         client = get_chroma_client()
         col = get_or_create_collection(client)
         chunk_count = col.count()
+        if chunk_count == 0:
+            logger.info("ChromaDB is empty on startup. Auto-indexing canonical corpus...")
+            try:
+                from src.ingestion.indexer import index_documents
+                index_documents(force_crawl=False)
+                chunk_count = col.count()
+                logger.info(f"Auto-indexed ChromaDB: {chunk_count} chunks ready.")
+            except Exception as ie:
+                logger.warning(f"Auto-indexing on startup failed: {ie}")
         logger.info(f"Connected to ChromaDB: collection '{col.name}' has {chunk_count} chunks.")
     except Exception as e:
         logger.warning(f"ChromaDB connection check encountered an issue during startup: {e}")
@@ -125,6 +134,20 @@ def get_session_manager() -> SessionManager:
 # ------------------------------------------------------------------------------
 # Endpoints
 # ------------------------------------------------------------------------------
+
+@app.get("/", tags=["Root"])
+def root_service_info():
+    """Root entrypoint providing service status, API navigation links, and documentation."""
+    return {
+        "service": "Groww | HDFC Mutual Fund Facts Assistant API",
+        "status": "online",
+        "documentation": "/docs",
+        "health_check": "/health",
+        "covered_schemes": "/api/schemes",
+        "chat_inquiry": "POST /api/chat",
+        "sessions": "/api/sessions",
+    }
+
 
 @app.get("/health", response_model=HealthResponse, tags=["Monitoring"])
 def health_check():
