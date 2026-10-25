@@ -19,7 +19,6 @@ env/
 ENV/
 
 # Data artifacts and local storage
-data/chromadb/
 data/chromadb_test/
 data/sessions/
 data/processed/

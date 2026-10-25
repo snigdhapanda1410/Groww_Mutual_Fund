@@ -2,10 +2,14 @@
  * Groww HDFC Mutual Fund Facts Assistant — Frontend Client
  * Communicates with Railway FastAPI backend via /api/* endpoints
  */
-// Relative path on Vercel reverse proxy (/api/*); fallback to localhost:8000 for local dev
+const RAILWAY_BACKEND = "https://web-production-b9894.up.railway.app";
+
+// On localhost -> http://localhost:8000; On Vercel / GitHub Pages -> direct Railway URL
 const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && window.location.port !== "8000"
     ? "http://localhost:8000"
-    : "";
+    : (window.location.hostname.endsWith("vercel.app") || window.location.hostname.endsWith("github.io")
+        ? RAILWAY_BACKEND
+        : "");
 
 let activeThreadId = null;
 let isSubmitting = false;
@@ -234,6 +238,7 @@ async function handleUserSubmit() {
     loadSavedSessions();
   } catch (err) {
     thinkingEl.remove();
+    console.error("Inquiry request failed:", err);
     renderAssistantMessage({
       content: "Unable to reach the facts database at this moment. Please verify the backend connection.",
       is_refusal: true,

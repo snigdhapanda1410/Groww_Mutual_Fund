@@ -87,8 +87,8 @@ async def lifespan(app: FastAPI):
         if chunk_count == 0:
             logger.info("ChromaDB is empty on startup. Auto-indexing canonical corpus...")
             try:
-                from src.ingestion.indexer import index_documents
-                index_documents(force_crawl=False)
+                from src.ingestion.indexer import index_all
+                index_all(force_crawl=False)
                 chunk_count = col.count()
                 logger.info(f"Auto-indexed ChromaDB: {chunk_count} chunks ready.")
             except Exception as ie:
@@ -169,6 +169,18 @@ def health_check():
         llm_model=config.groq_model,
         timestamp=time.time(),
     )
+
+
+@app.post("/api/admin/reindex", tags=["Admin"])
+def trigger_reindex():
+    """Trigger on-demand indexing of the 5 canonical Groww scheme pages."""
+    try:
+        from src.ingestion.indexer import index_all
+        summary = index_all(force_crawl=False)
+        return {"status": "success", "summary": summary}
+    except Exception as e:
+        logger.error(f"Reindex failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/schemes", response_model=List[SchemeOverview], tags=["Schemes"])
