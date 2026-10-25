@@ -358,17 +358,16 @@ if __name__ == "__main__":
         logger.warning(f"Invalid or non-integer PORT '{raw_port}', falling back to 8000")
         port = 8000
     reload_flag = os.getenv("API_RELOAD", "false").lower() in ("true", "1", "yes")
-    workers_env = os.getenv("WEB_CONCURRENCY", "1")
-    try:
-        workers = int(workers_env)
-    except (ValueError, TypeError):
-        workers = 1
 
+    # Strictly run a single worker (workers=1). In containerized deployments with
+    # embedded ChromaDB (SQLite) and local PyTorch embedding models, multi-worker mode
+    # spawns Uvicorn's Multiprocess supervisor which causes IPC health check death loops,
+    # locks SQLite, and exhausts container memory. FastAPI's async event loop handles
+    # concurrency within a single process.
     uvicorn.run(
         "src.api.main:app",
         host="0.0.0.0",
         port=port,
         reload=reload_flag,
-        workers=workers,
-        timeout_worker_healthcheck=30,
+        workers=1,
     )

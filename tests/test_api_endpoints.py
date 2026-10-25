@@ -239,11 +239,11 @@ class TestDeploymentConfigurations:
         assert "WEB_CONCURRENCY=1" in dockerfile
         assert "HF_HOME=/app/data/cache/huggingface" in dockerfile
         assert "NLTK_DATA=/app/data/cache/nltk_data" in dockerfile
+        assert "HF_HUB_OFFLINE=1" in dockerfile
 
         main_py = Path("src/api/main.py").read_text(encoding="utf-8")
-        assert 'workers_env = os.getenv("WEB_CONCURRENCY", "1")' in main_py
-        assert "timeout_worker_healthcheck=30" in main_py
+        assert "workers=1" in main_py
 
         wrapper_py = Path("scripts/uvicorn_wrapper.py").read_text(encoding="utf-8")
-        assert 'os.environ.setdefault("WEB_CONCURRENCY", "1")' in wrapper_py
-        assert "--timeout-worker-healthcheck" in wrapper_py
+        assert 'os.environ["WEB_CONCURRENCY"] = "1"' in wrapper_py
+        assert '"--workers", "1"' in wrapper_py

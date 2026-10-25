@@ -33,9 +33,20 @@ def get_embedding_function(model_name: Optional[str] = None):
     target_model = model_name or config.embedding_model_name
     if _EMBEDDING_FUNCTION is None:
         logger.info(f"Loading SentenceTransformer model '{target_model}' into singleton cache...")
-        _EMBEDDING_FUNCTION = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name=target_model
-        )
+        # Prefer cached offline model weights to eliminate unauthenticated HuggingFace Hub network calls
+        os.environ.setdefault("HF_HUB_OFFLINE", "1")
+        os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+        try:
+            _EMBEDDING_FUNCTION = embedding_functions.SentenceTransformerEmbeddingFunction(
+                model_name=target_model
+            )
+        except Exception as e:
+            logger.warning(f"Offline model load failed ({e}), falling back to online hub check...")
+            os.environ.pop("HF_HUB_OFFLINE", None)
+            os.environ.pop("TRANSFORMERS_OFFLINE", None)
+            _EMBEDDING_FUNCTION = embedding_functions.SentenceTransformerEmbeddingFunction(
+                model_name=target_model
+            )
     return _EMBEDDING_FUNCTION
 
 

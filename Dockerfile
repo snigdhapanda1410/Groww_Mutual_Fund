@@ -34,6 +34,10 @@ RUN mkdir -p /app/data/cache/huggingface /app/data/cache/sentence_transformers /
     python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')" && \
     python -c "import nltk; nltk.download('punkt', download_dir='/app/data/cache/nltk_data'); nltk.download('punkt_tab', download_dir='/app/data/cache/nltk_data')"
 
+# Enforce offline mode at runtime so container never makes unauthenticated HF calls
+ENV HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1
+
 # Copy application source code, corpus data, and operational scripts
 COPY src/ /app/src/
 COPY data/ /app/data/
