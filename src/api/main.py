@@ -78,9 +78,13 @@ CANONICAL_SCHEMES_METADATA = {
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan handler for startup diagnostics and warm-up."""
+    """Application lifespan handler for startup diagnostics, cache warming, and readiness."""
     logger.info("Initializing Mutual Fund FAQ API server...")
     try:
+        from src.ingestion.indexer import get_embedding_function
+        # Pre-warm SentenceTransformer singleton into RAM to ensure sub-second response times
+        get_embedding_function()
+
         client = get_chroma_client()
         col = get_or_create_collection(client)
         chunk_count = col.count()

@@ -22,19 +22,33 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def get_chroma_client(persist_path: Optional[str] = None) -> chromadb.PersistentClient:
-    """Initialize or connect to a local persistent ChromaDB client."""
-    target_path = Path(persist_path or config.chroma_persist_directory)
-    target_path.mkdir(parents=True, exist_ok=True)
-    return chromadb.PersistentClient(path=str(target_path))
+_CHROMA_CLIENT: Optional[chromadb.PersistentClient] = None
+_EMBEDDING_FUNCTION: Optional[Any] = None
+_COLLECTION: Optional[Any] = None
 
 
 def get_embedding_function(model_name: Optional[str] = None):
-    """Initialize SentenceTransformer embedding function with all-MiniLM-L6-v2."""
+    """Initialize or return cached SentenceTransformer embedding function (singleton)."""
+    global _EMBEDDING_FUNCTION
     target_model = model_name or config.embedding_model_name
-    return embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name=target_model
-    )
+    if _EMBEDDING_FUNCTION is None:
+        logger.info(f"Loading SentenceTransformer model '{target_model}' into singleton cache...")
+        _EMBEDDING_FUNCTION = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name=target_model
+        )
+    return _EMBEDDING_FUNCTION
+
+
+def get_chroma_client(persist_path: Optional[str] = None) -> chromadb.PersistentClient:
+    """Initialize or return cached local persistent ChromaDB client."""
+    global _CHROMA_CLIENT
+    target_path = Path(persist_path or config.chroma_persist_directory)
+    target_path.mkdir(parents=True, exist_ok=True)
+    if persist_path is not None:
+        return chromadb.PersistentClient(path=str(target_path))
+    if _CHROMA_CLIENT is None:
+        _CHROMA_CLIENT = chromadb.PersistentClient(path=str(target_path))
+    return _CHROMA_CLIENT
 
 
 def get_or_create_collection(
@@ -43,7 +57,8 @@ def get_or_create_collection(
     embedding_function: Optional[Any] = None,
     rebuild: bool = False,
 ):
-    """Retrieve or create ChromaDB collection with cosine distance metric."""
+    """Retrieve or create ChromaDB collection with cosine distance metric and singleton caching."""
+    global _COLLECTION
     name = collection_name or config.chroma_collection_name
     ef = embedding_function or get_embedding_function()
 
@@ -53,12 +68,19 @@ def get_or_create_collection(
             logger.info(f"Rebuild requested: Deleted existing ChromaDB collection '{name}'")
         except Exception:
             pass
+        _COLLECTION = None
 
-    return client.get_or_create_collection(
-        name=name,
-        embedding_function=ef,
-        metadata={"hnsw:space": "cosine"},
-    )
+    if _COLLECTION is None or collection_name is not None or rebuild:
+        col = client.get_or_create_collection(
+            name=name,
+            embedding_function=ef,
+            metadata={"hnsw:space": "cosine"},
+        )
+        if collection_name is None and not rebuild:
+            _COLLECTION = col
+        return col
+
+    return _COLLECTION
 
 
 def index_chunks(
