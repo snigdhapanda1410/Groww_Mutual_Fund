@@ -232,3 +232,18 @@ class TestDeploymentConfigurations:
         html_content = Path("index.html").read_text(encoding="utf-8")
         assert "SEBI Compliance" in html_content
         assert "Covered HDFC Direct Schemes" in html_content
+
+    def test_railway_concurrency_and_healthcheck_timeout_guards(self):
+        """Dockerfile, main.py, and uvicorn_wrapper must guard against multi-worker death loops."""
+        dockerfile = Path("Dockerfile").read_text(encoding="utf-8")
+        assert "WEB_CONCURRENCY=1" in dockerfile
+        assert "HF_HOME=/app/data/cache/huggingface" in dockerfile
+        assert "NLTK_DATA=/app/data/cache/nltk_data" in dockerfile
+
+        main_py = Path("src/api/main.py").read_text(encoding="utf-8")
+        assert 'workers_env = os.getenv("WEB_CONCURRENCY", "1")' in main_py
+        assert "timeout_worker_healthcheck=30" in main_py
+
+        wrapper_py = Path("scripts/uvicorn_wrapper.py").read_text(encoding="utf-8")
+        assert 'os.environ.setdefault("WEB_CONCURRENCY", "1")' in wrapper_py
+        assert "--timeout-worker-healthcheck" in wrapper_py

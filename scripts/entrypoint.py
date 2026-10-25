@@ -46,6 +46,10 @@ def sanitize_args(raw_args: list[str], port_str: str) -> list[str]:
 def main():
     port = get_port()
     os.environ["PORT"] = port
+    os.environ.setdefault("WEB_CONCURRENCY", "1")
+    os.environ.setdefault("HF_HOME", "/app/data/cache/huggingface")
+    os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", "/app/data/cache/sentence_transformers")
+    os.environ.setdefault("NLTK_DATA", "/app/data/cache/nltk_data")
 
     # Default to running the FastAPI app if no arguments given
     if len(sys.argv) <= 1:

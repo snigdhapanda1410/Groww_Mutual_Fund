@@ -10,6 +10,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     TOKENIZERS_PARALLELISM=false \
     OMP_NUM_THREADS=1 \
     MKL_NUM_THREADS=1 \
+    WEB_CONCURRENCY=1 \
+    HF_HOME=/app/data/cache/huggingface \
+    SENTENCE_TRANSFORMERS_HOME=/app/data/cache/sentence_transformers \
+    NLTK_DATA=/app/data/cache/nltk_data \
     PORT=8000
 
 WORKDIR /app
@@ -26,8 +30,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Pre-download SentenceTransformer model and NLTK tokenizers into container cache
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')" && \
-    python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
+RUN mkdir -p /app/data/cache/huggingface /app/data/cache/sentence_transformers /app/data/cache/nltk_data && \
+    python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')" && \
+    python -c "import nltk; nltk.download('punkt', download_dir='/app/data/cache/nltk_data'); nltk.download('punkt_tab', download_dir='/app/data/cache/nltk_data')"
 
 # Copy application source code, corpus data, and operational scripts
 COPY src/ /app/src/

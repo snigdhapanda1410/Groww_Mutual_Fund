@@ -358,4 +358,17 @@ if __name__ == "__main__":
         logger.warning(f"Invalid or non-integer PORT '{raw_port}', falling back to 8000")
         port = 8000
     reload_flag = os.getenv("API_RELOAD", "false").lower() in ("true", "1", "yes")
-    uvicorn.run("src.api.main:app", host="0.0.0.0", port=port, reload=reload_flag)
+    workers_env = os.getenv("WEB_CONCURRENCY", "1")
+    try:
+        workers = int(workers_env)
+    except (ValueError, TypeError):
+        workers = 1
+
+    uvicorn.run(
+        "src.api.main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=reload_flag,
+        workers=workers,
+        timeout_worker_healthcheck=30,
+    )
