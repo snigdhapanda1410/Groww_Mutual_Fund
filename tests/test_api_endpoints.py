@@ -219,12 +219,16 @@ class TestDeploymentConfigurations:
         assert "headers" in data
 
     def test_frontend_web_app_artifacts(self):
-        """frontend directory must contain index.html, app.js, and styles.css."""
+        """Root and frontend directory must contain index.html, app.js, and styles.css."""
+        assert Path("index.html").exists(), "Missing root index.html"
+        assert Path("app.js").exists(), "Missing root app.js"
+        assert Path("styles.css").exists(), "Missing root styles.css"
+
         frontend_dir = Path("frontend")
         assert (frontend_dir / "index.html").exists(), "Missing frontend/index.html"
         assert (frontend_dir / "app.js").exists(), "Missing frontend/app.js"
         assert (frontend_dir / "styles.css").exists(), "Missing frontend/styles.css"
 
-        html_content = (frontend_dir / "index.html").read_text(encoding="utf-8")
+        html_content = Path("index.html").read_text(encoding="utf-8")
         assert "SEBI Compliance" in html_content
         assert "Covered HDFC Direct Schemes" in html_content

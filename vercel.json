@@ -11,12 +11,8 @@
       "destination": "https://web-production-b9894.up.railway.app/health"
     },
     {
-      "source": "/",
-      "destination": "/frontend/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/$1"
+      "source": "/((?!api/|health).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
