@@ -2,14 +2,13 @@
  * Groww HDFC Mutual Fund Facts Assistant — Frontend Client
  * Communicates with Railway FastAPI backend via /api/* endpoints
  */
-const RAILWAY_BACKEND = "https://web-production-b9894.up.railway.app";
+const RAILWAY_BACKEND = "https://web-production-74c7ceee.up.railway.app";
 
-// On localhost -> http://localhost:8000; On Vercel / GitHub Pages -> direct Railway URL
+// On localhost -> http://localhost:8000; On Vercel -> use relative paths so vercel.json
+// proxy handles routing (avoids hardcoded Railway URL drift in future deployments)
 const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && window.location.port !== "8000"
     ? "http://localhost:8000"
-    : (window.location.hostname.endsWith("vercel.app") || window.location.hostname.endsWith("github.io")
-        ? RAILWAY_BACKEND
-        : "");
+    : "";
 
 let activeThreadId = null;
 let isSubmitting = false;
